@@ -25,9 +25,9 @@ async function dataExtractionEnrichment() {
   // prompt with clear formatting instructions 
   const prompt = `
   Research ${COMPANY}'s ${TEAM} business segment. 
-  1. Find 5–10 notable existing customers. 
+  1. Find existing customers. 
   2. Identify major trade associations, industry events, or professional bodies that these types of customers attend or belong to.
-  3. Find 10 companies that attended the events. They should not be current customers of ${COMPANY}. For the companies, research estimated:
+  3. Find 10 companies that attended these events. They should not be current customers of ${COMPANY}. For the companies, research estimated:
   - Revenue
   - Employee count
   - Website
@@ -37,8 +37,8 @@ async function dataExtractionEnrichment() {
   could be a potential new customer for ${COMPANY} ${TEAM}, including details. 
   6. Find 1–2 key decision-makers** (e.g., VP, Director, Head of relevant team). Include their name, title, and if available, LinkedIn Sales Navigator URL. 
 
-  Present as JSON array in format: 
-  BEGIN
+  IMPORTANT: Your response must contain ONLY valid JSON in the exact format below. Do not include any explanatory text, markdown formatting, or other content outside the JSON array.
+
    [
      {
        "Name": "...",
@@ -61,7 +61,6 @@ async function dataExtractionEnrichment() {
       ]
      }
    ]
-  END
   `; 
 
   try {
@@ -73,7 +72,7 @@ async function dataExtractionEnrichment() {
   } catch (error) {
     console.error("API error:", error.message);
     
-    // If no API key provided or error, return mock data
+    // If no API key provided or error, return mock data 
     console.log("Using mock data");
     return JSON.stringify([
       {
@@ -182,101 +181,19 @@ Best regards,
     }
 }
 
-// Extracts Perplexity's JSON output (for information about researched companies) from the string output. 
+// extract JSON from API string output 
 function extractJsonFromText(text) {
-  // Try different JSON extraction methods in order of preference
+  // console.log("Raw API output: ", text); 
+  // Find the outermost JSON array (the one with the most content)
+  const startIndex = text.indexOf('[');
+  const endIndex = text.lastIndexOf(']');
   
-  // Method 1: If the entire text is a valid JSON array or object
-  try {
-    const trimmedText = text.trim();
-    if ((trimmedText.startsWith('[') && trimmedText.endsWith(']')) || 
-        (trimmedText.startsWith('{') && trimmedText.endsWith('}'))) {
-      return JSON.parse(trimmedText);
-    }
-  } catch (e) {
-    console.log("Not a complete JSON document, trying other methods...");
+  if (startIndex === -1 || endIndex === -1 || startIndex >= endIndex) {
+    throw new Error("No JSON array found in text");
   }
   
-  // Method 2: Look for JSON between BEGIN and END markers
-  try {
-    if (text.includes("BEGIN") && text.includes("END")) {
-      const beginIndex = text.indexOf("BEGIN") + "BEGIN".length;
-      const endIndex = text.lastIndexOf("END");
-      if (beginIndex < endIndex) {
-        const jsonCandidate = text.substring(beginIndex, endIndex).trim();
-        return JSON.parse(jsonCandidate);
-      }
-    }
-  } catch (e) {
-    console.log("Could not extract JSON between BEGIN/END markers, trying other methods...");
-  }
-  
-  // Method 3: Find first occurrence of '[' and matching ']'
-  try {
-    const startBracket = text.indexOf('[');
-    if (startBracket !== -1) {
-      let bracketCount = 0;
-      let endBracket = -1;
-      
-      for (let i = startBracket; i < text.length; i++) {
-        if (text[i] === '[') bracketCount++;
-        if (text[i] === ']') bracketCount--;
-        
-        if (bracketCount === 0) {
-          endBracket = i + 1;
-          break;
-        }
-      }
-      
-      if (endBracket !== -1) {
-        const jsonCandidate = text.substring(startBracket, endBracket).trim();
-        return JSON.parse(jsonCandidate);
-      }
-    }
-  } catch (e) {
-    console.log("Could not extract JSON array, trying other methods...");
-  }
-  
-  // Method 4: Use regex to find JSON-like structures
-  try {
-    // Look for array pattern
-    const arrayRegex = /\[[\s\S]*?\]/g;
-    const arrayMatches = text.match(arrayRegex);
-    
-    if (arrayMatches && arrayMatches.length > 0) {
-      // Try each match until we find valid JSON
-      for (const match of arrayMatches) {
-        try {
-          if (match.length > 20) { // Avoid tiny matches that might not be our target JSON
-            return JSON.parse(match);
-          }
-        } catch (e) {
-          continue; // Try next match
-        }
-      }
-    }
-    
-    // Look for object pattern if array didn't work
-    const objectRegex = /\{[\s\S]*?\}/g;
-    const objectMatches = text.match(objectRegex);
-    
-    if (objectMatches && objectMatches.length > 0) {
-      for (const match of objectMatches) {
-        try {
-          if (match.length > 20) {
-            return JSON.parse(match);
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-    }
-  } catch (e) {
-    console.log("Could not extract JSON using regex");
-  }
-  
-  // If all methods fail, throw an error
-  throw new Error("Could not extract valid JSON from the response");
+  const jsonString = text.substring(startIndex, endIndex + 1);
+  return JSON.parse(jsonString); 
 }
 
 
@@ -289,21 +206,10 @@ app.get("/api/customers", async (req, res) => {
     const result = await dataExtractionEnrichment(); 
     let companyInfo = [];
 
-    try {
-      // extract JSON using regex 
-      companyInfo = extractJsonFromText(result);
-      // console.log(companyInfo); 
-    } catch (err) {
-      console.error("Failed to parse enriched JSON:", err.message);
-      console.error("Raw response:", result);
-      return res.status(500).json({ 
-        error: "Invalid JSON from API", 
-        rawResponse: result 
-      });
-    }
+    companyInfo = extractJsonFromText(result);
+    // console.log("Extracted JSON: ", companyInfo); 
 
-
-    console.log(`Successfully retrieved ${companyInfo.length} potential customers`);
+    console.log(`Successfully retrieved ${companyInfo.length} valid potential customers`);
     res.json({
       company: COMPANY,
       segment: TEAM,

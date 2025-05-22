@@ -4,15 +4,13 @@
     "description": "AI-powered market research tool to discover potential customers",
     "main": "server/app.js",
     "scripts": {
-      "start": "node server/app.js",
+      "start": "npm run build && node server/app.js",
       "server": "nodemon server/app.js",
       "client": "PORT=3000 react-scripts start",
-      "build": "react-scripts build",
+      "build": "npm run build --prefix client",
       "test": "react-scripts test",
       "eject": "react-scripts eject",
-      "dev": "concurrently \"npm run server\" \"npm run client\"",
-      "find-port": "lsof -i :5001",
-      "kill-port": "lsof -ti :5001 | xargs kill -9"
+      "dev": "concurrently \"npm run server\" \"npm run client\""
     },
     "proxy": "http://localhost:5001",
     "dependencies": {
