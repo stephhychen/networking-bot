@@ -183,7 +183,7 @@ Best regards,
 
 // extract JSON from API string output 
 function extractJsonFromText(text) {
-  // console.log("Raw API output: ", text); 
+  console.log("Raw API output: ", text); 
   // Find the outermost JSON array (the one with the most content)
   const startIndex = text.indexOf('[');
   const endIndex = text.lastIndexOf(']');
@@ -191,6 +191,7 @@ function extractJsonFromText(text) {
   if (startIndex === -1 || endIndex === -1 || startIndex >= endIndex) {
     throw new Error("No JSON array found in text");
   }
+  // let trimmedText = text.replace(/^```json\s*\n/, '').replace(/\n```\s*$/, '').trim();
   
   const jsonString = text.substring(startIndex, endIndex + 1);
   return JSON.parse(jsonString); 
