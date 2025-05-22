@@ -26,7 +26,7 @@ Replace `your_perplexity_api_key` with your actual key from Perplexity and updat
 
 ## 🚀 Deployment Instructions
 
-1. Run 'npm install' in the terminal to install all dependencies (listed in package.json).
-2. Run 'npm run dev' in the terminal to deploy both frontend and backend.
-3. Open 'http://localhost:3000' (should also automatically open after 'npm run dev')
+1. Run `npm install` in the terminal to install all dependencies (listed in package.json).
+2. Run `npm run dev` in the terminal to deploy both frontend and backend.
+3. Open 'http://localhost:3000' (should also automatically open after `npm run dev`)
 
