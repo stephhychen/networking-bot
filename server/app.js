@@ -207,7 +207,7 @@ app.get("/api/customers", async (req, res) => {
     let companyInfo = [];
 
     companyInfo = extractJsonFromText(result);
-    // console.log("Extracted JSON: ", companyInfo); 
+    console.log("Extracted JSON: ", companyInfo); 
 
     console.log(`Successfully retrieved ${companyInfo.length} valid potential customers`);
     res.json({
