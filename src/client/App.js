@@ -140,7 +140,7 @@ function App() {
                       
                       <div className="card-preview">
                         <span>{company["Industry Fit"]}</span>
-                        <span>{company["Size and Revenue"]}</span>
+                        {/* <span>{company["Size and Revenue"]}</span> */}
                       </div>
                       
                       <div className="card-details">
