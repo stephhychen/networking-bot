@@ -3,10 +3,6 @@
 Given a target company and department, this prototype finds companies that might fit the target company's ideal customer profile (ICP) by 
 identifying events current customer companies have attended, and finding companies that have attended the same events. 
 
-<img width="600" alt="Screenshot 2025-05-21 at 10 39 45 PM" src="https://github.com/user-attachments/assets/e0514361-447c-454e-b684-415e99b78b1b" />
-
-> The landing page of the companies researched for DuPont Tedlar's Graphics and Signage Division.
-
 The prototype also locates key stakeholders (leads) in the potential customer companies, and drafts personalized LinkedIn outreach messages. 
 
 (This feature is yet to be fully fleshed out -- a viable next step is integrating LinkedIn Sales Navigator API to more accurately locate company stakeholders 
