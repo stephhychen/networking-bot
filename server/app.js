@@ -3,7 +3,7 @@ const express = require("express");
 const { OpenAI } = require("openai");
 require("dotenv").config();
 
-// 
+// employ Express 
 const app = express();
 app.use(express.json());
 
@@ -17,45 +17,34 @@ const client = new OpenAI({
 });
 
 // Hardcoded company and team
-const COMPANY = process.env.COMPANY; 
-const TEAM = process.env.TEAM; 
+const CANDIDATE = process.env.CANDIDATE; 
+const NAME = process.env.NAME; 
 
-// 1. Use Perplexity to research customers with ICP 
+// Uses PerplexityAI to conduct research given name and details about information 
 async function dataExtractionEnrichment() {
   // prompt with clear formatting instructions 
-  const prompt = `
-  Research ${COMPANY}'s ${TEAM} business segment. 
-  1. Find existing customers. 
-  2. Identify major trade associations, industry events, or professional bodies that these types of customers attend or belong to.
-  3. Find 10 companies that attended these events. They should not be current customers of ${COMPANY}. For the companies, research estimated:
-  - Revenue
-  - Employee count
-  - Website
-  - Industry
-  4. Sort by revenue, tie-breaking by employee count. 
-  5. Format the company information into clear, structured, and easily readable summary, focused on why they
-  could be a potential new customer for ${COMPANY} ${TEAM}, including details. 
-  6. Find 1–2 key decision-makers** (e.g., VP, Director, Head of relevant team). Include their name, title, and if available, LinkedIn Sales Navigator URL. 
+  const prompt = `Research 10-20 potential connections given that ${NAME} is ${CANDIDATE}. 
+  Format the information into a clear, structured and easily readable summary, focused on why they 
+  could be a potential connection for ${NAME}, including details. 
 
   IMPORTANT: Your response must contain ONLY valid JSON in the exact format below. Do not include any explanatory text, markdown formatting, or other content outside the JSON array.
 
    [
      {
        "Name": "...",
-       "Industry Fit": "...",
-       "Size and Revenue": ...,
+       "Job Title": "...",
+       "Workplace": "...",
        "Strategic Relevance": "...",
-       "Industry Engagement": "...", 
-       "Market Activity": "...",
-       "Key Contacts": [
+       "Previous Mentorship": "...",
+       "Contact Information": [
         {
-          "Name": "Sarah Milton",
-          "Title": "VP of Procurement",
+          "Name": "Dan Erickson",
+          "Title": "Showrunner for Severance",
           "LinkedIn SalesNav URL": "https://www.linkedin.com/sales/people/sarah-milton"
         },
         {
-          "Name": "David Chen",
-          "Title": "Director of Marketing",
+          "Name": "Colin Jost",
+          "Title": "Head Writer for SNL",
           "LinkedIn SalesNav URL": "https://www.linkedin.com/sales/people/david-chen"
         }
       ]
@@ -76,65 +65,25 @@ async function dataExtractionEnrichment() {
     console.log("Using mock data");
     return JSON.stringify([
       {
-        "Name": "SignWorks Inc.",
-        "Industry Fit": "Signage Manufacturing",
-        "Size and Revenue": "$45M annual revenue, 250 employees",
-        "Strategic Relevance": "Uses vinyl materials for outdoor signage",
-        "Industry Engagement": "Member of ISA (International Sign Association)",
-        "Market Activity": "Recently expanded production capacity by 30%",
+        "Name": "...",
+        "Job Title": "...",
+        "Workplace": "...",
+        "Strategic Relevance": "...",
+        "Princeton Connection": "...", 
+        "Previous Mentorship": "...",
         "Key Contacts": [
-          {
-            "Name": "Sarah Milton",
-            "Title": "VP of Procurement",
-            "LinkedIn SalesNav URL": "https://www.linkedin.com/sales/people/sarah-milton"
-          },
-          {
-            "Name": "David Chen",
-            "Title": "Director of Marketing",
-            "LinkedIn SalesNav URL": "https://www.linkedin.com/sales/people/david-chen"
-          }
-        ],
+         {
+           "Name": "Dan Erickson",
+           "Title": "Showrunner for Severance",
+           "LinkedIn SalesNav URL": "https://www.linkedin.com/sales/people/sarah-milton"
+         },
+         {
+           "Name": "Colin Jost",
+           "Title": "Head Writer for SNL",
+           "LinkedIn SalesNav URL": "https://www.linkedin.com/sales/people/david-chen"
+         }
+       ]
       },
-      {
-        "Name": "GraphicPro Displays",
-        "Industry Fit": "Commercial Display Production",
-        "Size and Revenue": "$32M annual revenue, 180 employees",
-        "Strategic Relevance": "Specializes in weather-resistant displays",
-        "Industry Engagement": "Regular exhibitor at PRINTING United",
-        "Market Activity": "Launched new line of UV-resistant materials",
-        "Key Contacts": [
-          {
-            "Name": "Sarah Milton",
-            "Title": "VP of Procurement",
-            "LinkedIn SalesNav URL": "https://www.linkedin.com/sales/people/sarah-milton"
-          },
-          {
-            "Name": "David Chen",
-            "Title": "Director of Marketing",
-            "LinkedIn SalesNav URL": "https://www.linkedin.com/sales/people/david-chen"
-          }
-        ],
-      },
-      {
-        "Name": "Outdoor Media Solutions",
-        "Industry Fit": "Outdoor Advertising",
-        "Size and Revenue": "$28M annual revenue, 140 employees",
-        "Strategic Relevance": "Needs durable materials for billboards",
-        "Industry Engagement": "Member of OAAA (Outdoor Advertising Association)",
-        "Market Activity": "Expanding into digital/traditional hybrid displays",
-        "Key Contacts": [
-          {
-            "Name": "Sarah Milton",
-            "Title": "VP of Procurement",
-            "LinkedIn SalesNav URL": "https://www.linkedin.com/sales/people/sarah-milton"
-          },
-          {
-            "Name": "David Chen",
-            "Title": "Director of Marketing",
-            "LinkedIn SalesNav URL": "https://www.linkedin.com/sales/people/david-chen"
-          }
-        ],
-      }
     ]);
   }
 }
@@ -142,18 +91,17 @@ async function dataExtractionEnrichment() {
 // Call to Perplexity AI to generate a personalized LinkedIn outreach message seeking 
 // collaboration with our company given the target company and a stakeholder name. 
 // Inputs: company (object), contact (object) 
-async function generateLinkedinDraft(company, contact) {
+async function generateLinkedinDraft(contact) {
   const prompt = `
-    Write a personalized LinkedIn message to ${contact.Name} (${contact.Title}) at ${company}. 
+    Write a personalized LinkedIn message to ${contact.Name} (${contact.Title}). 
     The message should:
-    1. Be professional and concise (under 200 words)
-    2. Reference their role at ${company}
-    3. Propose potential collaboration with ${COMPANY} in the ${TEAM} segment
-    4. Justify why the collaboration would work well
-    5. Include a clear call-to-action for a brief conversation
-    6. Be friendly but not overly familiar
+    1. Be professional, funny and concise (under 200 words)
+    2. Reference their role and any connection to Princeton or previous experience 
+    3. Reference ${NAME}'s experience as ${CANDIDATE}, and make any connections. 
+    4. Ask for a brief coffee, call or mentorship possibilities
+    5. This is with the end goal of securing a writer's assistant job!
     
-    Format as a ready-to-send LinkedIn message. No need for citations or extra justification.
+    Format as a ready-to-send email. No need for citations or extra justification.
     `;
 
     try {
@@ -168,16 +116,10 @@ async function generateLinkedinDraft(company, contact) {
       // Template message (in case API doesn't work)
       return `Hi ${contact.Name},
 
-I hope this message finds you well. I noticed your role as ${contact.Title} at ${company}, and I'm impressed by the work your team is doing.
-
-I'm reaching out from ${COMPANY}, where we specialize in ${TEAM} solutions. Given ${company}'s focus and growth trajectory, I believe there might be some interesting synergies between our organizations.
-
-Would you be open to a brief 15-minute conversation to explore potential collaboration opportunities? I'd love to learn more about your current priorities and share some insights from our work with similar companies.
-
-Looking forward to hearing from you.
+I hope this message finds you well! Please give me a job. I love to write comedy. 
 
 Best regards,
-[Your Name]`;
+${NAME}`;
     }
 }
 
@@ -201,20 +143,18 @@ function extractJsonFromText(text) {
 /* API endpoint for customer data extraction + enrichment using Perplexity */ 
 app.get("/api/customers", async (req, res) => {
   try {
-    console.log(`Fetching insights for ${COMPANY}, ${TEAM} team...`);
+    console.log(`Fetching insights for ${NAME}`);
     
     // Parse JSON data from research 
     const result = await dataExtractionEnrichment(); 
-    let companyInfo = [];
+    let contactInfo = [];
 
-    companyInfo = extractJsonFromText(result);
-    console.log("Extracted JSON: ", companyInfo); 
+    contactInfo = extractJsonFromText(result);
+    console.log("Extracted JSON: ", contactInfo); 
 
-    console.log(`Successfully retrieved ${companyInfo.length} valid potential customers`);
+    console.log(`Successfully retrieved ${contactInfo.length} valid potential customers`);
     res.json({
-      company: COMPANY,
-      segment: TEAM,
-      companyInfo,
+      contactInfo,
     });
   } catch (error) {
     console.error("Error:", error.message);
@@ -225,20 +165,19 @@ app.get("/api/customers", async (req, res) => {
 /* API endpoint for generating draft messages using Perplexity */ 
 app.post("/api/draft-message", async (req, res) => {
   try {
-    const { contact, company } = req.body;
+    const { contact } = req.body;
     
-    if (!contact || !company) {
-      return res.status(400).json({ error: "Contact and company information required" });
+    if (!contact) {
+      return res.status(400).json({ error: "Contac information required" });
     }
 
-    console.log(`Generating draft message for ${contact.Name} at ${company}...`);
+    console.log(`Generating draft message for ${contact.Name}`);
     
-    const draftMessage = await generateLinkedinDraft(company, contact);
+    const draftMessage = await generateLinkedinDraft( contact);
     
     res.json({
       message: draftMessage.trim(),
       contact: contact,
-      company: company
     });
   } catch (error) {
     console.error("Error generating draft message:", error.message);
